@@ -1,0 +1,6 @@
+La empresa MABOL posee un camión con capacidad de 9 T para trasnsportar troncas. El psso de las troncas sigue
+una distribución triángular con parámetros a = 1.5 b=2, c = 3.5. El camión debe transportar diariamente un número variable de troncas
+regido por Poisson(4). Si el peso de las troncas excede la capacidad del camión, MABOL debe pagar 350 por contratar un camión que cargue 
+la tronca que no cupo en el camión de 9 Toneladas. El costo total promedio annual incluidos los costos de adquisición, de evaluación y
+operación de un nuevo camión más grande es de 75000$. Trabajando los 360 días del año, ¿cuál alternativa es más rentable: alquilar el camión o
+comprar uno nuevo?

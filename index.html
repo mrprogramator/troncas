@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" />
+        <style>
+            .wood
+            {
+                background-color: #ab7f4a;
+                border-radius: 4px;
+                color: #000;
+                padding-right: 5px;
+                padding-left: 5px;
+                font-weight: bold;
+                white-space: nowrap;
+                border: 1px solid #000;
+            }
+
+            .truck-container
+            {
+                background-color: #c3ba9c;
+                border-color:#878582;
+                padding:0px;
+            }
+
+            .parameters-container
+            {
+                background-color: #c3ba9c;
+                border-color:#878582;
+                padding:5px;
+            }
+
+            .panel-wood-danger .panel-heading
+            {
+                color: #ffffff;
+                background-color: #3c2613;
+            }
+            .panel-wood-danger
+            {
+                border-color: #3c2613;
+            }
+
+            .panel-wood-warning .panel-heading
+            {
+                color: #000;
+                background-color: #ab7f4a;
+            }
+            .panel-wood-warning
+            {
+                border-color: #ab7f4a;
+            }
+
+            .panel-wood-default .panel-heading
+            {
+                color: #000;
+                background-color: #f8fdae;
+            }
+            .panel-wood-default
+            {
+                border-color: #f8fdae;
+            }
+
+            .wood-input
+            {
+                background-color:#f8fdae;
+            }
+
+            .autor-div
+            {
+                background-color:#f8fdae;
+                border-radius: 4px;
+                border: 1px solid #000;
+                position: fixed;
+                top:10px;
+                right: 20px;
+                padding: 7px;
+                z-index: 10;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="autor-div">
+            <strong>Materia:</strong> Modelación y Simulación
+            <br/><strong>Docente:</strong> Jairo Sierra
+            <br/><strong>Autor:</strong> Luis Alberto Saucedo Quiroga
+            <br/><strong>Fecha:</strong> Octubre 2016
+        </div>
+        <div class="container" style="padding-top:20px;padding-left:0px;padding-right:0px">
+            <h3 class="text-center" style="margin:0px"><strong>TRANSPORTE DE TRONCAS</strong></h3>
+            <div class="jumbotron parameters-container">
+                <div class="form-group">
+                    <label class="label-control">Número de iteraciones</label>
+                    <input id="rep" class="form-control wood-input" placeholder="Número de iteraciones" type="number" value="360" />
+                </div>
+                <div class="form-group">
+                    <label class="label-control">Capacidad por camión (Toneladas)</label>
+                    <input id="capacidadCamion" class="form-control wood-input" placeholder="Capacidad por camión" type="number" value="9"/>
+                </div>
+                <div class="form-group">
+                    <label class="label-control">Costo de alquiler ($)</label>
+                    <input id="costoAlquiler" class="form-control wood-input" placeholder="Costo de alquiler" type="number" value="350"/>
+                </div>
+                <div class="form-group">
+                    <label class="label-control">Distribución para el peso de las troncas (Triangular)</label>
+                    <div class="form-group">
+                        <input id="a" class="form-control wood-input" placeholder="a" type="number" value="1.5"/>
+                    </div>
+                    <div class="form-group">
+                        <input id="c" class="form-control wood-input" placeholder="b" type="number" value="2"/>
+                    </div>
+                    <div class="form-group">
+                        <input id="b" class="form-control wood-input" placeholder="c" type="number" value="3.5"/>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="label-control">Distribución para la cantidad de troncas (Poisson)</label>
+                    <input id="poisson" class="form-control wood-input" placeholder="Poisson" type="number" value="4"/>
+                </div>
+                <div class="form-group">
+                    <label class="label-control">Costo de un Camión más Grande ($)</label>
+                    <input id="costoNuevoCamion" class="form-control wood-input" placeholder="Costo de nuevo camión" type="number" value="75000"/>
+                </div>
+                <div class="form-group">
+                    <a onclick="start()" class="btn btn-block wood">Simular</a>
+                </div>
+            </div>
+            <div id="results">
+
+            </div>
+        </div>
+        <script>
+            function start(){
+                var pond = 24;
+                
+                document.getElementById('results').innerHTML = "<div class=\"progress\">"
+                    +"<div id=\"main-progress\" class=\"progress-bar wood\" style=\"width:" + pond + "%\">Trabajando</div>"
+                +"</div>";
+
+                function increaseProgress(pond, callback){
+                    if(pond < 100){
+                        document.getElementById('main-progress').style.width= pond + '%';
+                        setTimeout(function () {
+                            pond += 1;
+                            increaseProgress(pond, callback);
+                        }, 5);
+                    }
+                    else{
+                        callback();
+                    }
+                }
+
+                increaseProgress(pond, simular);
+            }
+
+            function simular(){
+                var rep = document.getElementById('rep').value;
+                var capacidadCamion = document.getElementById('capacidadCamion').value;
+                var costoAlquiler = document.getElementById('costoAlquiler').value;
+                var a = document.getElementById('a').value;
+                var b = document.getElementById('b').value;
+                var c = document.getElementById('c').value;
+                var poisson = document.getElementById('poisson').value;
+
+                var costoNuevoCamion = parseInt(document.getElementById('costoNuevoCamion').value);
+
+                makeHTTPRequest('/?rep=' + rep + '&capacidadCamion=' + capacidadCamion 
+                + '&costoAlquiler=' + costoAlquiler + '&tA=' + a + '&tB=' + b  + '&tC=' + c
+                + '&poisson=' + poisson, function (response){
+                    response = JSON.parse(response);
+                    console.log(response);
+                    var html = "";
+
+                    
+                    var resultMessage = "";
+                    if(response.costoTotal < costoNuevoCamion){
+                        resultMessage = "Es más rentable <strong>ALQUILAR CAMIONES</strong> con un costo de <strong>"+ response.costoTotal +"$</strong>";
+                    }
+                    else if (response.costoTotal == costoNuevoCamion){
+                        resultMessage = "<strong>ALQUILAR CAMIONES</strong> cuesta lo mismo que <strong>COMPRAR UN NUEVO CAMIÓN</strong> con un costo de <strong>"+ response.costoTotal +"$</strong>";
+                    }
+                    else{
+                        resultMessage = "Es más rentable <strong>COMPRAR UN NUEVO CAMIÓN</strong> con un costo de <strong>"+ costoNuevoCamion +"$</strong>";
+                    }
+
+                    html += "<div class=\"alert wood-input text-center\"><h2>"
+                            + resultMessage
+                        +"</h2></div>"
+                    
+                    html += "<h3 class=\"text-center\"><strong>COSTO TOTAL ALQUILER: " + response.costoTotal + " $</strong></h3>";
+                    
+                    var dias = 1;
+                    response.iteraciones.forEach(function (iteracion){
+                        if (iteracion.costo > 350){
+                            html += getDayTemplate(iteracion, dias, 'panel-wood-danger');
+                        }
+                        else if (iteracion.costo > 0){
+                            html += getDayTemplate(iteracion, dias, 'panel-wood-warning');
+                        }
+                        else{
+                            html += getDayTemplate(iteracion, dias, 'panel-wood-default');
+                        }
+                        
+                        dias++;
+                    })
+
+
+                    document.getElementById('results').innerHTML = html;
+                });
+            }
+            function makeHTTPRequest(url, callback){
+                var xmlhttp;
+                xmlhttp = new XMLHttpRequest();
+                xmlhttp.onreadystatechange = function(){
+                    if (xmlhttp.readyState == 4 && xmlhttp.status == 200){
+                    callback(xmlhttp.responseText);
+                    }
+                }
+                xmlhttp.open("POST", url, true);
+                xmlhttp.send();
+            }
+
+            function getDayTemplate(iteracion, dias, panelClass){
+                var html = "";
+                html +="<div class=\"col-md-4 col-sm-6\">"
+                        +"<div class=\"panel " + panelClass +"\">"
+                            +"<div class=\"panel panel-heading\">"
+                                +"<h4 class=\"text-center\"><strong>DÍA " + dias + "</strong></h4>"
+                            +"</div>"
+                            +"<div class=\"panel-body\">"
+                                +"<strong>COSTO: </strong>" + iteracion.costo + "$"
+                                +"<br /><strong># TRONCAS: </strong>" + iteracion.nroTroncas
+                                +"<br /><strong># CAMIONES: </strong>" + iteracion.camiones.length
+                                + getTrucksTemplate(iteracion.camiones)
+                            +"</div>" 
+                        +"</div>"
+                    +"</div>";
+
+                return html;
+            }
+
+            function getTrucksTemplate(trucks){
+                var html = "";
+                trucks.forEach(function (truck) {
+                    html += getTruckTemplate(truck);
+                })
+                return html;
+            }
+
+            function getTruckTemplate(truck){
+                var html = "";
+                
+                html +="<div class=\"row\">"
+                            +"<div class=\"col-xs-10\">"
+                                +"<div class=\"alert truck-container\" style=\"min-height:54px\">"
+                                    + getTroncasTemplate(truck.troncas)
+                                    +"<strong class=\"pull-right\">DISPONIBLE: "
+                                    + Math.round(truck.disponible*100)/100 
+                                    +"T</strong>"
+                                +"</div>"
+                            +"</div>"
+                            +"<div class=\"col-xs-2\"></div>"
+                        +"</div>"
+                        +"<img src=\"/img/truck.png\" style=\"max-height:100px;width:100%;margin-top:-80px;padding-left:200px\"/>"
+
+                return html;
+            }
+
+
+            function getTroncasTemplate(troncas){
+                var html = "";
+                
+                troncas.forEach(function (tronca) {
+                    html +="<div class=\"col-xs-4\"><wood class=\"wood\">"+ tronca.peso +" T</wood></div>";
+                })
+                
+                return html;
+            }
+        </script>
+    </body>
+</html>
